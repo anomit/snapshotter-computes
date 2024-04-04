@@ -40,11 +40,13 @@ class TrackingWalletInteractionProcessor(GenericProcessorSnapshot):
         txs_hset = await redis_conn.hgetall(epoch_txs_htable(epoch.epochId))
         all_txs = {k.decode(): EthTransactionReceipt.parse_raw(v) for k, v in txs_hset.items()}
 
-        wallet_address = '0xae2Fc483527B8EF99EB5D9B44875F005ba1FaE13'
+        # wormhole bridge
+        wallet_address = '0x3ee18B2214AFF97000D974cf647E7C347E8fa585'
         wallet_txs = list(
             map(
                 lambda x: x.dict(), filter(
-                    lambda tx: tx.from_field == wallet_address and tx.to,
+                    lambda tx: tx.from_field == wallet_address or 
+                    tx.to == wallet_address,
                     all_txs.values(),
                 ),
             ),
@@ -58,6 +60,7 @@ class TrackingWalletInteractionProcessor(GenericProcessorSnapshot):
                     TrackingWalletInteractionSnapshot(
                         wallet_address=wallet_address,
                         contract_address=tx['to'],
+                        logs=tx.logs
                     ),
                 ),
             )
