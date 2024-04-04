@@ -52,7 +52,8 @@ class TrackingWalletInteractionProcessor(GenericProcessorSnapshot):
 
         snapshots = []
         for tx in wallet_txs:
-            await redis_conn.sadd('wallet_project_ids', )
+            # TODO: add these data sources in a cache redis set for ready referencing from a backend to serve a usecase
+            # await redis_conn.sadd('wallet_project_ids', )
             snapshots.append(
                 (
                     # this is the unique project ID which can be queried against http://localhost:8002/docs
