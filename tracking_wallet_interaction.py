@@ -40,13 +40,11 @@ class TrackingWalletInteractionProcessor(GenericProcessorSnapshot):
         txs_hset = await redis_conn.hgetall(epoch_txs_htable(epoch.epochId))
         all_txs = {k.decode(): EthTransactionReceipt.parse_raw(v) for k, v in txs_hset.items()}
 
-        # wormhole bridge
-        wallet_address = '0x3ee18B2214AFF97000D974cf647E7C347E8fa585'
+        wallet_address = '0xdAC17F958D2ee523a2206206994597C13D831ec7'  # USDT contract address
         wallet_txs = list(
             map(
                 lambda x: x.dict(), filter(
-                    lambda tx: tx.from_field == wallet_address or 
-                    tx.to == wallet_address,
+                    lambda tx: tx.from_field == wallet_address or (tx.to is not None and tx.to == wallet_address),
                     all_txs.values(),
                 ),
             ),
@@ -54,15 +52,20 @@ class TrackingWalletInteractionProcessor(GenericProcessorSnapshot):
 
         snapshots = []
         for tx in wallet_txs:
+            await redis_conn.sadd('wallet_project_ids', )
             snapshots.append(
                 (
-                    f"{wallet_address}_{tx['to']}",
+                    # this is the unique project ID which can be queried against http://localhost:8002/docs
+                    # check projects.example.json in config repo for project type = eth:tracking_wallet_interaction
+                    # and namespace = DEVNET in deploy .env
+                    # eth:tracking_wallet_interaction:{from}_{to}:DEVNET
+                    f"{tx['from_field']}_{tx['to']}",  
                     TrackingWalletInteractionSnapshot(
                         wallet_address=wallet_address,
                         contract_address=tx['to'],
-                        logs=tx.logs
                     ),
                 ),
             )
+
 
         return snapshots
